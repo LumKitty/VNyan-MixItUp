@@ -35,23 +35,26 @@ Value 3 - SessionID
 Text 1 - User's custom title  
 Text 2 - Platform-specific data in JSON format  
 Text 3 - Username  
+
 ```_lum_miu_getstatus``` - Get information about the plugin and MIU  
 Value 3 - SessionID  
 Text 2 - Caallback trigger name  
-Callback:
+Callback:  
 Value 1 - HTTP result from MixItUp  
 Value 3 - SessionID  
 Text 1 - Plugin version  
 Text 2 - MixItUp version  
+
 ```_lum_miu_config``` - Get or set plugin configuration  
 Text 1 - Set Default platform
 Text 2 - Set MixItUp API URL (must have trailing /)  
 Text 3 - Callback trigger name  
-Callback:
+Callback:  
 Value 2 - SessionID  
 Text 1 - Default platform  
 Text 2 - MixItUp API URL  
 Text 2 - Error filename (if the plugin crashes, full logs go here)  
+
 ```_miu_seterrorfile``` - Change the error file location  
 Value 3 - SessionID  
 Text 1 - Full path to error file  
