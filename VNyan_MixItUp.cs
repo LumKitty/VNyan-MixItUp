@@ -18,7 +18,7 @@ namespace VNyan_MixItUp
     {
         private string ErrorFile = System.IO.Path.GetTempPath() + "\\Lum_MIU_Error.txt";
         private string[] Platforms = { "Twitch", "Twitch", "YouTube", "Trovo" };
-        private const string Version = "0.5-alpha";
+        private const string Version = "0.5-beta";
         private string miuURL = "http://localhost:8911/api/v2/";
         private static HttpClient client = new HttpClient();
         Dictionary<String, String> miuCommands = new Dictionary<string, string>();
