@@ -3,9 +3,10 @@
 Allows you to send chat messages, run custom MixItUpCommands, and retrieve user information from MixItUp via the MixItUp developer API
 
 ## Installation
-Copy the contents of the zip file into VNyan\Items\Assemblies (no subfolders)  
-Enable the MixItUp developer API: Services -> Developer API  
-(Optional) Import the example node graph
+1. Download from https://github.com/LumKitty/VNyan-MixItUp/releases
+2. Copy the contents of the zip file into VNyan\Items\Assemblies (no subfolders)  
+3. Enable the MixItUp developer API: Services -> Developer API  
+4. (Optional) Import the example node graph
 
 ## Configuration
 The default configuration assumes MixItUp is running on the same PC as VNyan and you are using Twitch.  
@@ -20,22 +21,23 @@ Unless otherwise specified, All functions take a callback trigger name on Text 3
 
 ```_lum_miu_chat``` - Send a chat message  
 
-Text 1 - Chat message to send  
-Value 1 - Send as Streamer (set to 1 to send as streamer, set to 0 or leave unset to send as bot. If you do not have a bot account, this will always send as streamer)  
-Value 2 - PlatformID  
+Text 1 (Required) - Chat message to send  
+Text 3 (Optional) - Callback trigger name for HTTP result (e.g. 200 OK)  
+Number 1 (Optional) - Send as Streamer (set to 1 to send as streamer, set to 0 or leave unset to send as bot. If you do not have a bot account, this will always send as streamer)  
+Number 2 (Optional) - PlatformID  
 
 Callback:  
 Value 1 - HTTP result  
 
 ```_lum_miu_command``` - Run a MixItUp command  
-Text 1 - Name of command in MixItUp (not chat trigger, actual name)  
-Text 2 - Arguments to the command  
-Text 3 - Callback trigger name (returns HTTP result on Value1, e.g. 200 OK)  
-Value 2 - PlatformID  
+Text 1 (Required) - Name of command in MixItUp (not chat trigger, actual name)  
+Text 2 (Optional) - Arguments to the command This will appear in $AllArgs in MixItUp
+Text 3 (Optional) - Callback trigger name for HTTP result (e.g. 200 OK)
+Number 2 (Optional) - PlatformID  
 
-```_lum_miu_getcommands``` - Get the full list of commands MixItUp has available, including your custom ones  
-Text 1 - Delimeter to use (defaults to comma if not specified) use a different delimeter such as || if you have command names with commas in them. You are not limited to one character.  
-Text 3 - Callback trigger name (returns full list of commands on text1, e.g. Shoutout,Add Quote,Custom Command)  
+```_lum_miu_getcommands``` - Get the full list of commands MixItUp has available, including your custom ones.  
+Text 1 (Optional) - Delimeter to use (defaults to comma if not specified) use a different delimeter such as || if you have command names with commas in them. You are not limited to one character.  
+Text 3 (Optional) - Callback trigger name (returns full list of commands on text1, e.g. Shoutout,Add Quote,Custom Command)  
 
 Callback:  
 Text 1 - Comma (or specified delimiter) separated list of commands available to you  
@@ -44,23 +46,23 @@ This trigger also forces the plugin to refresh & cache the full list of commands
 Note: The list is blank on startup. If you have a lot of commands you may wish to call this trigger on startup.  
 
 ```_lum_miu_getuser``` - Get information about a given user  
-Text 1 - Username  
-Text 2 - Callback trigger name (returns userdata)  
-Value 2 - PlatformID  
+Text 1 (Required) - Username  
+Text 2 (Required) - Callback trigger name (returns userdata)  
+Number 2 (Optional) - PlatformID  
 
 Callback:  
-Value 1 - Time watched in minutes  
-Value 2 - User is specifically excluded in MIU  
 Text 1 - User's custom title  
 Text 2 - Platform-specific data in JSON format. See section below on this
 Text 3 - Username  
+Number 1 - Time watched in minutes  
+Number 2 - User is specifically excluded in MIU  
 
 ```_lum_miu_getstatus``` - Get information about the plugin and MIU  
 Callback:  
-Value 1 - HTTP result from MixItUp  
-Value 3 - SessionID  
 Text 1 - Plugin version  
 Text 2 - MixItUp version  
+Number 1 - HTTP result from MixItUp  
+Number 3 - SessionID  
 
 ```_lum_miu_config``` - Get or set plugin configuration  
 Text 1 - Set Default platform
