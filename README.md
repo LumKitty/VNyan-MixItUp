@@ -2,6 +2,8 @@
 
 Allows you to send chat messages, run custom MixItUpCommands, and retrieve user information from MixItUp via the MixItUp developer API
 
+![image](https://github.com/user-attachments/assets/baf87f57-0813-4c22-a74b-a5258bcd66aa)
+
 ## Installation
 1. Download from https://github.com/LumKitty/VNyan-MixItUp/releases
 2. Copy the contents of the zip file into VNyan\Items\Assemblies (no subfolders)  
