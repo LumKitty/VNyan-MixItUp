@@ -1,6 +1,6 @@
 # MixItUp plugin for VNyan
 
-Provides access to the MixItUp developer API from VNyan via several custom triggers:
+Allows you to send chat messages, run custom MixItUpCommands, and retrieve user information from MixItUp via the MixItUp developer API
 
 ## Installation
 Copy the contents of the zip file into VNyan\Items\Assemblies (no subfolders)  
