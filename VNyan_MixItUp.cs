@@ -16,12 +16,20 @@ namespace VNyan_MixItUp
 {
     public class MixItUp : MonoBehaviour, VNyanInterface.ITriggerHandler
     {
-        private string ErrorFile = System.IO.Path.GetTempPath() + "\\Lum_MIU_Error.txt";
-        private string[] Platforms = { "Twitch", "Twitch", "YouTube", "Trovo" };
-        private const string Version = "0.5-beta";
-        private string miuURL = "http://localhost:8911/api/v2/";
+        private string ErrorFile; // = System.IO.Path.GetTempPath() + "\\Lum_MIU_Error.txt";
+        private string LogFile; // = System.IO.Path.GetTempPath() + "\\Lum_MIU_Log.txt";
+        private string[] Platforms = { "Twitch", "Twitch", "YouTube", "Trovo" }; // [0] is the user-selectable default platform, 1-3 are fixed, Twitch is default, hence the double
+        private const string Version = "0.6-beta";
+        private string miuURL; // = "http://localhost:8911/api/v2/";
         private static HttpClient client = new HttpClient();
         Dictionary<String, String> miuCommands = new Dictionary<string, string>();
+
+        private void Log(string message) {
+            if (LogFile.ToString().Length > 0)
+            {
+                System.IO.File.AppendAllText(LogFile, message + "\r\n");
+            }
+        }
 
         public void Awake()
         {
@@ -29,6 +37,7 @@ namespace VNyan_MixItUp
             {
                 VNyanInterface.VNyanInterface.VNyanTrigger.registerTriggerListener(this);
                 loadPluginSettings();
+                System.IO.File.WriteAllText(LogFile, "Started VNyan-MixItUp v"+Version+"\r\n");
             }
             catch (Exception e)
             {
@@ -43,18 +52,45 @@ namespace VNyan_MixItUp
             if (settings != null)
             {
                 // Read string value
-                settings.TryGetValue("MixItUpURL", out miuURL);
-                settings.TryGetValue("DefaultPlatform", out Platforms[0]);
-                settings.TryGetValue("ErrorFile", out ErrorFile);
+                string temp_MiuURL;
+                string temp_Platform;
+                string temp_ErrorFile;
+                string temp_LogFile;
+                settings.TryGetValue("MixItUpURL", out temp_MiuURL);
+                settings.TryGetValue("DefaultPlatform", out temp_Platform);
+                settings.TryGetValue("ErrorFile", out temp_ErrorFile);
+                settings.TryGetValue("LogFile", out temp_LogFile);
+                if (temp_MiuURL != null) { 
+                    miuURL = temp_MiuURL; 
+                } else {
+                    miuURL = "http://localhost:8911/api/v2/";
+                }
+                if (temp_Platform != null) { 
+                    Platforms[0] = temp_Platform; 
+                } else {
+                    Platforms[0] = "Twitch";
+                }
+                if (temp_ErrorFile != null) {
+                    ErrorFile = temp_ErrorFile;
+                } else {
+                    ErrorFile = System.IO.Path.GetTempPath() + "\\Lum_MIU_Error.txt";
+                }
+                if (temp_LogFile != null) { 
+                    LogFile = temp_LogFile;
+                }
+                else {
+                    LogFile = System.IO.Path.GetTempPath() + "\\Lum_MIU_Log.txt";
+                }
 
-                // Convert second value to decimal
-                //if (settings.TryGetValue("SomeValue2", out string s))
-                //{
-                //    float.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out someValue2);
-                //}
+        // Convert second value to decimal
+        //if (settings.TryGetValue("SomeValue2", out string s))
+        //{
+        //    float.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out someValue2);
+        //}
 
             }
         }
+
 
         private void OnApplicationQuit()
         {
@@ -68,11 +104,12 @@ namespace VNyan_MixItUp
             settings["MixItUpURL"] = miuURL;
             settings["DefaultPlatform"] = Platforms[0];
             settings["ErrorFile"] = ErrorFile;
+            settings["LogFile"] = LogFile;
             // settings["SomeValue2"] = someValue2.ToString(CultureInfo.InvariantCulture); // Make sure to use InvariantCulture to avoid decimal delimeter errors
 
             VNyanInterface.VNyanInterface.VNyanSettings.saveSettings("Lum-MixItUp.cfg", settings);
         }
-     static string EscapeJSON(string value)
+        static string EscapeJSON(string value)
         {
             const char BACK_SLASH = '\\';
             const char SLASH = '/';
@@ -174,7 +211,7 @@ namespace VNyan_MixItUp
                 //Console.WriteLine(Response.ToString());
                 if (Callback.Length > 0)
                 {
-                    VNyanInterface.VNyanInterface.VNyanTrigger.callTrigger(Callback, httpStatus, 0, SessionID, "", "", "");
+                    CallVNyan(Callback, httpStatus, 0, SessionID, "", "", "");
                 }
             }
             catch (Exception e)
@@ -206,7 +243,12 @@ namespace VNyan_MixItUp
         {
             if (TriggerName.Length > 0)
             {
+                Log("Calling " + TriggerName + " with " + int1.ToString() + ", " + int2.ToString() + ", " + int3.ToString() + ", " + Text1 + ", " + Text2 + ", " + Text3);
                 VNyanInterface.VNyanInterface.VNyanTrigger.callTrigger(TriggerName, int1, int2, int3, Text1, Text2, Text3);
+            } 
+            else
+            {
+                Log("Invalid trigger name");
             }
         }
 
@@ -257,16 +299,24 @@ namespace VNyan_MixItUp
             }
         }
 
+        async Task ClearMiuChat(string Callback, int SessionID)
+        {
+            string URL = miuURL + "chat/clear";
+            httpRequest("POST", URL, "", Callback, SessionID);
+        }
+
         async Task GetMiuUser(string UserName, string Callback, string Platform, int SessionID)
         {
             try
             {
                 string URL = miuURL + "users/" + Platform + "/" + UserName;
                 var Result = await client.GetAsync(URL);
-                int Excluded;
-                string PlatformData;
                 string Response = Result.Content.ReadAsStringAsync().Result;
                 dynamic Results = JsonConvert.DeserializeObject<dynamic>(Response);
+                
+                int Excluded;
+                string Roles = "";
+                string CustomTitle = Results.User.CustomTitle;
 
                 int MinutesWatched = Results.User.OnlineViewingMinutes;
                 if ((bool)Results.User.IsSpecialtyExcluded)
@@ -277,48 +327,27 @@ namespace VNyan_MixItUp
                 {
                     Excluded = 0;
                 }
-
-                string CustomTitle = Results.User.CustomTitle;
-
-                switch (Platform.ToLower())
+                foreach (string Role in Results.User.PlatformData[Platform].Roles)
                 {
-                    case "twitch":
-                        dynamic PlatformDataJSON = Results.User.PlatformData["Twitch"];
-                        string Roles = "";
-                        foreach (string Role in PlatformDataJSON.Roles)
-                        {
-                            Roles += "," + Role;
-                        }
-                        Roles = Roles.Substring(1);
-                        Console.WriteLine(Roles);
-                        PlatformDataJSON.Roles = Roles;
-                        // PlatformDataJSON.SubscribeDate = PlatformDataJSON.SubscribeDate.ToString();
-                        // PlatformDataJSON.AccountDate = PlatformDataJSON.AccountDate.ToString();
-                        // PlatformDataJSON.FollowDate = PlatformDataJSON.FollowDate.ToString();
-                        // PlatformDataJSON.SubscriberTier = PlatformDataJSON.SubscriberTier.ToString();
-                        PlatformData = PlatformDataJSON.ToString();
-                        break;
-                    case "youtube":
-                        PlatformData = Results.User.PlatformData["Youtube"].ToString();
-                        break;
-                    case "trovo":
-                        PlatformData = Results.User.PlatformData["Trovo"].ToString();
-                        break;
-                    default:
-                        try
-                        {
-                            PlatformData = Results.User.PlatformData[Platform].ToString();
-                        }
-                        catch
-                        {
-                            PlatformData = "Could not find platform '" + Platform + "' Please check case-sensitivity. Raw data: " + Results.User.PlatformData.ToString();
-                        }
-                        break;
+                    Roles += "," + Role;
                 }
-                // Workaround for bug where VNyan doesn't like JSON keys to have uppercase, and carriage returns break monitoring
-                PlatformData = PlatformData.Replace("\r\n", "").Replace("\n", "").ToLower();
-                // End workaround
-                CallVNyan(Callback, MinutesWatched, Excluded, SessionID, CustomTitle, PlatformData, UserName);
+                Roles = Roles.Substring(1);
+
+                JObject VNyanResult = new JObject(
+                    new JProperty("username", UserName),
+                    new JProperty("watchtime", Results.User.OnlineViewingMinutes.ToString()),
+                    new JProperty("customtitle", Results.User.CustomTitle),
+                    new JProperty("excluded", Excluded.ToString()),
+                    new JProperty("notes", Results.User.Notes),
+                    new JProperty("platform", Results.User.PlatformData[Platform].Platform),
+                    new JProperty("displayname", Results.User.PlatformData[Platform].DisplayName),
+                    new JProperty("avatarlink", Results.User.PlatformData[Platform].AvatarLink), 
+                    new JProperty("roles", Roles),
+                    new JProperty("subscribertier", Results.User.PlatformData[Platform].SubscriberTier.ToString() )
+                );
+                Log(VNyanResult.ToString());
+
+                CallVNyan(Callback, MinutesWatched, Excluded, SessionID, CustomTitle, VNyanResult.ToString(), UserName);
             }
             catch (Exception e)
             {
@@ -343,7 +372,7 @@ namespace VNyan_MixItUp
             }
         }
 
-        async Task Config(string Platform, string URL, string NewErrorFile, string Callback, int SessionID)
+        async Task Config(string Platform, string URL, string NewErrorFile, string NewLogFile, string Callback, int SessionID)
         {
             try
             {
@@ -359,11 +388,94 @@ namespace VNyan_MixItUp
                 {
                     ErrorFile = NewErrorFile;
                 }
+                if (NewLogFile.Length > 0)
+                {
+                    LogFile = NewLogFile;
+                }
                 CallVNyan(Callback, 0, 0, SessionID, Platforms[0], miuURL, ErrorFile);
             }
             catch (Exception e)
             {
                 ErrorHandler(e);
+            }
+        }
+
+        async Task GetMiuInventory(string UserName, string InventoryName, string Callback, string Platform, int SessionID)
+        {
+            InventoryName = InventoryName.ToLower();
+            string URL = miuURL + "users/" + Platform + "/" + UserName;
+            var Result = await client.GetAsync(URL);
+            string Response = Result.Content.ReadAsStringAsync().Result;
+            dynamic Results = JsonConvert.DeserializeObject<dynamic>(Response);
+            string UserID = Results.User.ID;
+
+            URL = miuURL + "inventory";
+            Result = await client.GetAsync(URL);
+            Response = Result.Content.ReadAsStringAsync().Result;
+            Results = JsonConvert.DeserializeObject<dynamic>(Response);
+            string InventoryID = "";
+            foreach (dynamic result in Results)
+            {
+                if (result.Name.ToString().ToLower() == InventoryName)
+                {
+                    InventoryID = result.ID;
+                }
+            }
+            if (InventoryID.Length > 0)
+            {
+                URL = miuURL + "inventory/" + InventoryID + "/" + UserID;
+                Result = await client.GetAsync(URL);
+                Response = Result.Content.ReadAsStringAsync().Result;
+                Results = JsonConvert.DeserializeObject<dynamic>(Response);
+                JObject VNyanResult = new JObject();
+                foreach (dynamic result in Results)
+                {
+                    VNyanResult.Add(result.Name.ToString().ToLower(), result.Amount.ToString());
+                }
+                CallVNyan(Callback, 0, 0, SessionID, UserName, InventoryName, VNyanResult.ToString());
+            }
+            else
+            {
+                CallVNyan(Callback, 0, 1, SessionID, UserName, InventoryName, "{}");
+            }
+        }
+
+        async Task GetMiuCurrency(string UserName, string CurrencyName, string Callback, string Platform, int SessionID)
+        {
+            CurrencyName = CurrencyName.ToLower();
+            Log("CurrencyName: "+ CurrencyName);
+            string URL = miuURL + "users/" + Platform + "/" + UserName;
+            var Result = await client.GetAsync(URL);
+            string Response = Result.Content.ReadAsStringAsync().Result;
+            dynamic Results = JsonConvert.DeserializeObject<dynamic>(Response);
+            string UserID = Results.User.ID;
+
+            URL = miuURL + "currency";
+            Result = await client.GetAsync(URL);
+            Response = Result.Content.ReadAsStringAsync().Result;
+            Log(Response);
+            Results = JsonConvert.DeserializeObject<dynamic>(Response);
+            string CurrencyID = "";
+            foreach (dynamic result in Results)
+            {
+                if (result.Name.ToString().ToLower() == CurrencyName)
+                {
+                    CurrencyID = result.ID.ToString();
+                }
+            }
+            Log("Currency ID: " + CurrencyID);
+            if (CurrencyID.Length > 0)
+            {
+                URL = miuURL + "currency/" + CurrencyID + "/" + UserID;
+                Log(URL);
+                Result = await client.GetAsync(URL);
+                Response = Result.Content.ReadAsStringAsync().Result;
+                Log(Response);
+                CallVNyan(Callback, int.Parse(Response), 0, SessionID, UserName, CurrencyName, "");
+            }
+            else
+            {
+                CallVNyan(Callback, 0, 1, SessionID, UserName, CurrencyName, "");
             }
         }
 
@@ -375,30 +487,47 @@ namespace VNyan_MixItUp
             string Content = ""; */
             try
             {
-                switch (name)
+                if (name.Substring(0,9) == "_lum_miu_")
                 {
-                    case "_lum_miu_chat":
-                        SendMiuChat(text1, (int1 > 0), Callback, Platforms[PlatformID], SessionID);
-                        break;
-                    case "_lum_miu_command":
-                        runMiuCommand(text1.ToLower(), text2, Callback, Platforms[PlatformID], SessionID);
-                        break;
-                    case "_lum_miu_getcommands":
-                        if (text1.Length == 0) { text1 = ","; }
-                        getMiuCommands(text1, Callback, SessionID);
-                        break;
-                    case "_lum_miu_getuser":
-                        GetMiuUser(text1, Callback, Platforms[PlatformID], SessionID);
-                        break;
-                    case "_lum_miu_getstatus":
-                        GetStatus(Callback, Platforms[PlatformID], SessionID);
-                        break;
-                    case "_lum_miu_config":
-                        Config(text1, text2, "", Callback, SessionID);
-                        break;
-                    case "_lum_miu_seterrorfile":
-                        Config("", "", text1, Callback, SessionID);
-                        break;
+                    Log("Detected trigger: " + name + " with " + int1.ToString() + ", " + SessionID.ToString() + ", " + PlatformID.ToString() + ", " + text1 + ", " + text2 + ", " + Callback);
+                    switch (name.Substring(8))
+                    {
+                        case "_chat":
+                            SendMiuChat(text1, (int1 > 0), Callback, Platforms[PlatformID], SessionID);
+                            break;
+                        case "_clearchat":
+                            ClearMiuChat(Callback, SessionID);
+                            break;
+                        case "_command":
+                            runMiuCommand(text1.ToLower(), text2, Callback, Platforms[PlatformID], SessionID);
+                            break;
+                        case "_getcommands":
+                            if (text1.Length == 0) { text1 = ","; }
+                            getMiuCommands(text1, Callback, SessionID);
+                            break;
+                        case "_getuser":
+                            GetMiuUser(text1, Callback, Platforms[PlatformID], SessionID);
+                            break;
+                        case "_getinventory":
+                            GetMiuInventory(text1, text2, Callback, Platforms[PlatformID], SessionID);
+                            break;
+                        case "_getcurrency":
+                            GetMiuCurrency(text1, text2, Callback, Platforms[PlatformID], SessionID);
+                            break;
+                        case "_getstatus":
+                            GetStatus(Callback, Platforms[PlatformID], SessionID);
+                            break;
+                        case "_config":
+                            Config(text1, text2, "", "", Callback, SessionID);
+                            break;
+                        case "_seterrorfile":
+                            Config("", "", text1, text2, Callback, SessionID);
+                            break;
+                        //_setcurrency
+                        //_addcurrency
+                        //_setinventory
+                        //_addinventory
+                    }
                 }
             }
             catch (Exception e)
