@@ -15,8 +15,7 @@ The default configuration assumes MixItUp is running on the same PC as VNyan and
 Use ```_lum_miu_config``` if you need to change this. (See Available Triggers below)
 
 ## Known Issues
-Only tested on Twitch. GetUser platform data for other platforms almost certainly will not work. If you stream on YouTube or Trovo and would be willing to help me grab some test platformdata info we can fix this, please get in touch with me!  
-PlatformData is forced to lowercase. This only affects DisplayName, but currently can't be fixed
+Only tested on Twitch. GetUser platform data for other platforms might work but I can't test it. If you stream on YouTube or Trovo and would be willing to test, please get in touch with me!  
 
 ## Available triggers:
 Unless otherwise specified, All functions take a callback trigger name on Text 3, and a Session ID on Value 3. Many also take a Platform ID on Value 2. See the sections below for a description of these.  
