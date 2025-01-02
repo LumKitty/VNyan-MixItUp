@@ -54,10 +54,28 @@ Number 2 (Optional) - PlatformID
 
 Callback:  
 Text 1 - User's custom title  
-Text 2 - Platform-specific data in JSON format. See section below on this
+Text 2 - User in JSON format. See section below on this
 Text 3 - Username  
 Number 1 - Time watched in minutes  
 Number 2 - User is specifically excluded in MIU  
+
+```_lum_miu_getcurrency``` - Get a the value for a specific currency and specific user  
+Text 1 - Username  
+Text 2 - Currency name  
+
+Callback:  
+Text 1 - Username  
+Text 2 - Currency name  
+Number 1 - Currency amount
+
+```_lum_miu_getinventory``` - Get a the value for a specific currency and specific user  
+Text 1 - Username  
+Text 2 - Currency name  
+
+Callback:  
+Text 1 - Username  
+Text 2 - Inventory name  
+Text 3 - Inventory JSON - convert to dictionary to get <item> <value> pairs  
 
 ```_lum_miu_getstatus``` - Get information about the plugin and MIU  
 Callback:  
@@ -77,7 +95,7 @@ Text 2 - Error filename (if the plugin crashes, a log goes here)
 
 ```_miu_seterrorfile``` - Change the error file location  
 Text 1 - Full path to error file  
-Text 2 - Callback trigger name  
+Text 2 - Full path to log file
 Callback is same as above
 
 Debug function:  
@@ -99,7 +117,17 @@ While the plugin allows you to configure a default platform. This can be overrid
 3 - Trovo
 
 ## PlatformData
-The MixItUp get user API returns platform-specific data. For twitch it then makes a few modification to make it readable by VNyan's 'JSON to Dictionary' node. As I do not stream on YouTube or Trovo, I do not have access to this data structure and the resulting JSON is almost certainly incompatible. This will be fixed once I can get data from another VTuber
+Contains JSON compatible with the JSON to dictionary node, with the following keys:  
+username  
+watchtime - in minutes)  
+customtitle - can be set in MixItUp)  
+excluded - the "Is specially exluded" option in MixItUp. 0 = not excluded, 1 = excluded  
+notes - User notes you may have set in MixItUp
+platform - Twitch, YouTube or Trovo
+displayname - May differ from username
+avatarlink - URL to the user's profile pic  
+roles - comma separated list of roles the user has in MIU e.g. moderator, vip etc. Can be split to a TArray and then searched for a specific value  
+subscribertier - 0, 1, 2 or 3, for twitch. No idea if this does anything on YouTube  
 
 As always, if you find this useful, consider sending a follow or a raid my way, and if you make millions with it, consider sending me some :D
 
