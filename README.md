@@ -65,9 +65,25 @@ Text 2 - Currency name
 Callback:  
 Text 1 - Username  
 Text 2 - Currency name  
+Number 1 - Currency amount  
+
+```_lum_miu_setcurrency``` - Set a the value for a specific currency and specific user  
+Text 1 - Username  
+Text 2 - Currency name  
 Number 1 - Currency amount
 
-```_lum_miu_getinventory``` - Get a the value for a specific currency and specific user  
+Callback:  
+Value 1 - HTTP result  
+
+```_lum_miu_addcurrency``` - Add a value to a specific currency for a specific user  
+Text 1 - Username  
+Text 2 - Currency name  
+Number 1 - Currency amount to amend by (e.g. -10 to spend 10 coins)
+
+Callback:  
+Value 1 - HTTP result  
+
+```_lum_miu_getinventory``` - Get all items in a particular inventory, for a specific user  
 Text 1 - Username  
 Text 2 - Currency name  
 
@@ -75,6 +91,31 @@ Callback:
 Text 1 - Username  
 Text 2 - Inventory name  
 Text 3 - Inventory JSON - convert to dictionary to get <item> <value> pairs  
+
+```_lum_miu_getitem_<INVENTORYNAME>``` - Get the amount of a specific item within the inventory <INVENTORYNAME>  
+Text 1 - Username  
+Text 2 - Item name  
+
+Callback:  
+Text 1 - Username  
+Text 2 - Item name  
+Number 1 - Item amount  
+
+```_lum_miu_setitem_<INVENTORYNAME>``` - Set the amount of a specific item within the inventory <INVENTORYNAME>  
+Text 1 - Username  
+Text 2 - Item name  
+Number 1 - New item amount
+
+Callback:  
+Value 1 - HTTP result  
+
+```_lum_miu_additem_<INVENTORYNAME>``` - Add to the amount of a specific item within the inventory <INVENTORYNAME>  
+Text 1 - Username  
+Text 2 - Item name  
+Number 1 - Amount to adjust item amount by (e.g. -1 to consume an inventory item)
+
+Callback:  
+Value 1 - HTTP result  
 
 ```_lum_miu_getstatus``` - Get information about the plugin and MIU  
 Callback:  
@@ -117,16 +158,16 @@ While the plugin allows you to configure a default platform. This can be overrid
 
 ## PlatformData
 Contains JSON compatible with the JSON to dictionary node, with the following keys:  
-username  
-watchtime - in minutes)  
-customtitle - can be set in MixItUp)  
-excluded - the "Is specially exluded" option in MixItUp. 0 = not excluded, 1 = excluded  
-notes - User notes you may have set in MixItUp
-platform - Twitch, YouTube or Trovo
-displayname - May differ from username
-avatarlink - URL to the user's profile pic  
-roles - comma separated list of roles the user has in MIU e.g. moderator, vip etc. Can be split to a TArray and then searched for a specific value  
-subscribertier - 0, 1, 2 or 3, for twitch. No idea if this does anything on YouTube  
+```username``` - typically in Lower case  
+```watchtime``` - in minutes  
+```customtitle``` - can be set in MixItUp  
+```excluded``` - the "Is specially exluded" option in MixItUp. 0 = not excluded, 1 = excluded  
+```notes``` - User notes you may have set in MixItUp
+```platform``` - Twitch, YouTube or Trovo
+```displayname``` - May differ from username, will use whatever case the user prefers
+```avatarlink``` - URL to the user's profile pic  
+```roles``` - comma separated list of roles the user has in MIU e.g. moderator, vip etc. Can be split to a TArray and then searched for a specific value  
+```subscribertier``` - 0, 1, 2 or 3, for Twitch. No idea if this does anything on YouTube or Trovo  
 
 As always, if you find this useful, consider sending a follow or a raid my way, and if you make millions with it, consider sending me some :D
 

@@ -20,7 +20,7 @@ namespace VNyan_MixItUp
         private string ErrorFile; // = System.IO.Path.GetTempPath() + "\\Lum_MIU_Error.txt";
         private string LogFile;   // = System.IO.Path.GetTempPath() + "\\Lum_MIU_Log.txt";
         private string[] Platforms   = { "Twitch", "Twitch", "YouTube", "Trovo" }; // [0] is the user-selectable default platform, 1-3 are fixed, Twitch is default, hence the double
-        private const string Version = "0.6-beta";
+        private const string Version = "1.0-RC1";
         private string miuURL;    // = "http://localhost:8911/api/v2/";
         private static HttpClient client = new HttpClient();
         private Dictionary<String, String> miuCommands    = new Dictionary<string, string>();
@@ -31,8 +31,6 @@ namespace VNyan_MixItUp
         /*                 InventoryID
          *                                    Name    ItemID
          */
-        
-
         private void Log(string message) {
             if (LogFile.ToString().Length > 0) {
                 System.IO.File.AppendAllText(LogFile, message + "\r\n");
@@ -42,13 +40,13 @@ namespace VNyan_MixItUp
             try {
                 
                 VNyanInterface.VNyanInterface.VNyanTrigger.registerTriggerListener(this);
-                loadPluginSettings();
+                LoadPluginSettings();
                 System.IO.File.WriteAllText(LogFile, "Started VNyan-MixItUp v"+Version+"\r\n");
             } catch (Exception e) {
                 ErrorHandler(e);
             }
         }
-        private void loadPluginSettings() {
+        private void LoadPluginSettings() {
             // Get settings in dictionary
             Dictionary<string, string> settings = VNyanInterface.VNyanInterface.VNyanSettings.loadSettings("Lum-MixItUp.cfg");
             if (settings != null) {
@@ -93,9 +91,9 @@ namespace VNyan_MixItUp
         }
         private void OnApplicationQuit() {
             // Save settings
-            savePluginSettings();
+            SavePluginSettings();
         }
-        private void savePluginSettings() {
+        private void SavePluginSettings() {
             Dictionary<string, string> settings = new Dictionary<string, string>();
             settings["MixItUpURL"] = miuURL;
             settings["DefaultPlatform"] = Platforms[0];
@@ -105,34 +103,7 @@ namespace VNyan_MixItUp
 
             VNyanInterface.VNyanInterface.VNyanSettings.saveSettings("Lum-MixItUp.cfg", settings);
         }
-        static string EscapeJSON(string value) {
-            const char BACK_SLASH = '\\';
-            const char SLASH = '/';
-            const char DBL_QUOTE = '"';
-
-            var output = new StringBuilder(value.Length);
-            foreach (char c in value) {
-                switch (c) {
-                    case SLASH:
-                        output.AppendFormat("{0}{1}", BACK_SLASH, SLASH);
-                        break;
-
-                    case BACK_SLASH:
-                        output.AppendFormat("{0}{0}", BACK_SLASH);
-                        break;
-
-                    case DBL_QUOTE:
-                        output.AppendFormat("{0}{1}", BACK_SLASH, DBL_QUOTE);
-                        break;
-
-                    default:
-                        output.Append(c);
-                        break;
-                }
-            }
-            return output.ToString();
-        } // TODO: Get rid of this (used in SendMiuChat)
-        async Task updateMiuCommands() {
+        async Task UpdateMiuCommands() {
             try {
                 miuCommands.Clear();
                 int skip = 0;
@@ -207,10 +178,10 @@ namespace VNyan_MixItUp
                 ErrorHandler(e);
             }
         }
-        async Task runMiuCommand(string command, string args, string Callback, string Platform, int SessionID) {
+        async Task RunMiuCommand(string command, string args, string Callback, string Platform, int SessionID) {
             try {
                 if (!miuCommands.ContainsKey(command)) {
-                    await updateMiuCommands();
+                    await UpdateMiuCommands();
                     if (!miuCommands.ContainsKey(command)) { Console.WriteLine("command not found"); return; }
                 }
 
@@ -232,9 +203,9 @@ namespace VNyan_MixItUp
             System.IO.File.WriteAllText(ErrorFile, e.ToString());
             CallVNyan("_lum_miu_error", 0, 0, 0, e.ToString(), "", "");
         }
-        async Task getMiuCommands(string delimiter, string Callback, int SessionID) {
+        async Task GetMiuCommands(string delimiter, string Callback, int SessionID) {
             try {
-                await updateMiuCommands();
+                await UpdateMiuCommands();
                 string result = "";
                 foreach (string value in miuCommands.Keys)
                 {
@@ -250,7 +221,12 @@ namespace VNyan_MixItUp
             try {
                 string URL = miuURL + "chat/message";
                 string Method = "POST";
-                string Content = "{ \"Message\": \"" + EscapeJSON(Message) + "\", \"Platform\": \"" + Platform + "\", \"SendAsStreamer\": "; // TODO: Convert to newtonsoft JSON
+                JObject Content = new JObject(
+                    new JProperty("Message", Message),
+                    new JProperty("Platform", Platform),
+                    new JProperty("SendAsStreamer", SendAsStreamer)
+                );
+                /* string Content = "{ \"Message\": \"" + EscapeJSON(Message) + "\", \"Platform\": \"" + Platform + "\", \"SendAsStreamer\": "; // TODO: Convert to newtonsoft JSON
                 if (SendAsStreamer)
                 {
                     Content += "true }";
@@ -258,8 +234,8 @@ namespace VNyan_MixItUp
                 else
                 {
                     Content += "false }";
-                }
-                httpRequest(Method, URL, Content, Callback, SessionID);
+                }*/
+                httpRequest(Method, URL, Content.ToString(), Callback, SessionID);
             } catch (Exception e) {
                 ErrorHandler(e);
             }
@@ -360,7 +336,6 @@ namespace VNyan_MixItUp
                 ErrorHandler(e);
             }
         }
-
         string GetMiuInventoryItemID(string InventoryName, string ItemName)
         {
             string ItemID = "";
@@ -404,37 +379,28 @@ namespace VNyan_MixItUp
                         tempItemID = item.ID.ToString().ToLower();
                         Log("Adding :" + tempItemName + " ID: " + tempItemID);
                         tempItemList.Add(tempItemName, tempInventoryID + "/" + tempItemID);
-                        if (tempItemName == ItemName && tempInventoryName == InventoryName)
-                        {
-                            ItemID = tempInventoryID + "/" + tempItemID;
-                        }
+                        if (tempItemName == ItemName && tempInventoryName == InventoryName) { ItemID = tempInventoryID + "/" + tempItemID; }
                     }
+                    if (ItemName == "" && InventoryName == tempInventoryName) { ItemID = tempInventoryID; }
                     miuItems.Add(tempInventoryID, tempItemList);
                 }
             }
             Log("Item ID: " + ItemID);
             return ItemID;
         }
-
-        /* async Task GetMiuInventory(string UserName, string InventoryName, string Callback, string Platform, int SessionID) {
+        string GetMiuInventoryID(string InventoryName) {
+            return GetMiuInventoryItemID(InventoryName, "");
+        }
+        async Task GetMiuInventory(string UserName, string InventoryName, string Callback, string Platform, int SessionID) {
             InventoryName = InventoryName.ToLower();
             string UserID = GetMiuUserID(UserName, Platform);
+            string InventoryID = GetMiuInventoryID(InventoryName);
 
-            string URL = miuURL + "inventory";
-            var Result = await client.GetAsync(URL);
-            string Response = Result.Content.ReadAsStringAsync().Result;
-            dynamic Results = JsonConvert.DeserializeObject<dynamic>(Response);
-            string InventoryID = "";
-            foreach (dynamic result in Results) {
-                if (result.Name.ToString().ToLower() == InventoryName) {
-                    InventoryID = result.ID;
-                }
-            }
             if (InventoryID.Length > 0) {
-                URL = miuURL + "inventory/" + InventoryID + "/" + UserID;
-                Result = await client.GetAsync(URL);
-                Response = Result.Content.ReadAsStringAsync().Result;
-                Results = JsonConvert.DeserializeObject<dynamic>(Response);
+                string URL = miuURL + "inventory/" + InventoryID + "/" + UserID;
+                var Result = await client.GetAsync(URL);
+                string Response = Result.Content.ReadAsStringAsync().Result;
+                dynamic Results = JsonConvert.DeserializeObject<dynamic>(Response);
                 JObject VNyanResult = new JObject();
                 foreach (dynamic result in Results) {
                     VNyanResult.Add(result.Name.ToString().ToLower(), result.Amount.ToString());
@@ -443,8 +409,7 @@ namespace VNyan_MixItUp
             } else {
                 CallVNyan(Callback, 0, 1, SessionID, UserName, InventoryName, "{}");
             }
-        } */
-
+        }
         async Task GetMiuInventoryItemAmount(string UserName, string InventoryName, string ItemName, string Callback, string Platform, int SessionID) {
             string UserID = GetMiuUserID(UserName, Platform);
             string ItemID = GetMiuInventoryItemID(InventoryName, ItemName);
@@ -463,7 +428,6 @@ namespace VNyan_MixItUp
                 CallVNyan(Callback, 0, 1, SessionID, UserName, InventoryName, ItemName);
             }
         }
-
         async Task SetMiuInventoryItemAmount(string UserName, string InventoryName, string ItemName, int Amount, string Callback, string Platform, int SessionID, string Method)
         {
             string UserID = GetMiuUserID(UserName, Platform);
@@ -484,7 +448,6 @@ namespace VNyan_MixItUp
                 CallVNyan(Callback, 0, 1, SessionID, UserName, InventoryName, ItemName);
             }
         }
-
         string GetMiuCurrencyID(string CurrencyName) {
             CurrencyName = CurrencyName.ToLower();
             if (miuCurrencies.ContainsKey(CurrencyName)) {
@@ -542,7 +505,7 @@ namespace VNyan_MixItUp
                 CallVNyan(Callback, 0, 1, SessionID, UserName, CurrencyName, "");
             }
         }
-        async Task GetMiuUsers(string Callback, string Platform, int SessionID, bool All)
+        /*async Task GetMiuUsers(string Callback, string Platform, int SessionID, bool All)
         {
             string URL = "";
             if (All) {
@@ -572,7 +535,7 @@ namespace VNyan_MixItUp
             {
                 CallVNyan(Callback, 0, 1, SessionID, "", "", "");
             }
-        }
+        }*/
 
         public void triggerCalled(string name, int int1, int SessionID, int PlatformID, string text1, string text2, string Callback) {
             try {
@@ -586,18 +549,18 @@ namespace VNyan_MixItUp
                             ClearMiuChat(Callback, SessionID);
                             break;
                         case "_command":
-                            runMiuCommand(text1.ToLower(), text2, Callback, Platforms[PlatformID], SessionID);
+                            RunMiuCommand(text1.ToLower(), text2, Callback, Platforms[PlatformID], SessionID);
                             break;
                         case "_getcommands":
                             if (text1.Length == 0) { text1 = ","; }
-                            getMiuCommands(text1, Callback, SessionID);
+                            GetMiuCommands(text1, Callback, SessionID);
                             break;
                         case "_getuser":
                             GetMiuUser(text1, Callback, Platforms[PlatformID], SessionID);
                             break;
-                        /*case "_getinventory":
+                        case "_getinventory":
                             GetMiuInventory(text1, text2, Callback, Platforms[PlatformID], SessionID);
-                            break;*/
+                            break;
                         case "_getcurrency":
                             GetMiuCurrency(text1, text2, Callback, Platforms[PlatformID], SessionID);
                             break;
@@ -616,25 +579,25 @@ namespace VNyan_MixItUp
                         case "_seterrorfile":
                             Config("", "", text1, text2, Callback, SessionID);
                             break;
-                        case "_getactiveusers":
+                        /*case "_getactiveusers":
                             GetMiuUsers(Callback, Platforms[PlatformID], SessionID, false);
                             break;
                         case "_getallusers":
                             GetMiuUsers(Callback, Platforms[PlatformID], SessionID, true);
-                            break;
+                            break;*/
                         default:
-                            if (name.Length > 17) {
-                                string InventoryID = name.Substring(16);
+                            if (name.Length > 18) {
+                                string InventoryID = name.Substring(17);
                                 Log("Inventory Name :" +InventoryID);
-                                Log("Function Called :" + name.Substring(0,16));
-                                switch (name.Substring(0,16)) {
-                                    case "_lum_miu_getinv_":
+                                Log("Function Called :" + name.Substring(0,17));
+                                switch (name.Substring(0,17)) {
+                                    case "_lum_miu_getitem_":
                                         GetMiuInventoryItemAmount(text1, InventoryID, text2, Callback, Platforms[PlatformID], SessionID);
                                         break;
-                                    case "_lum_miu_setinv_":
+                                    case "_lum_miu_setitem_":
                                         SetMiuInventoryItemAmount(text1, InventoryID, text2, int1, Callback, Platforms[PlatformID], SessionID, "PUT");
                                         break;
-                                    case "_lum_miu_addinv_":
+                                    case "_lum_miu_additem_":
                                         SetMiuInventoryItemAmount(text1, InventoryID, text2, int1, Callback, Platforms[PlatformID], SessionID, "PATCH");
                                         break;
 
