@@ -22,7 +22,7 @@ Unless otherwise specified, All functions take a callback trigger name on Text 3
 
 ```_lum_miu_chat``` - Send a chat message  
 
-Text 1 (Required) - Chat message to send  
+Text 1 - Chat message to send  
 Text 3 (Optional) - Callback  
 Number 1 (Optional) - Send as Streamer (set to 1 to send as streamer, set to 0 or leave unset to send as bot. If you do not have a bot account, this will always send as streamer)  
 Number 2 (Optional) - PlatformID  
@@ -31,7 +31,7 @@ Callback:
 Value 1 - HTTP result  
 
 ```_lum_miu_command``` - Run a MixItUp command  
-Text 1 (Required) - Name of command in MixItUp (not chat trigger, actual name)  
+Text 1 - Name of command in MixItUp (not chat trigger, actual name)  
 Text 2 (Optional) - Arguments to the command This will appear in $AllArgs in MixItUp  
 Text 3 (Optional) - Callback  
 Number 2 (Optional) - PlatformID  
@@ -47,8 +47,8 @@ This trigger also forces the plugin to refresh & cache the full list of commands
 Note: The list is blank on startup. If you have a lot of commands you may wish to call this trigger on startup.  
 
 ```_lum_miu_getuser``` - Get information about a given user  
-Text 1 (Required) - Username  
-Text 2 (Required) - Callback trigger name (returns userdata)  
+Text 1 - Username  
+Text 2 - Callback trigger name (returns userdata)  
 Text 3 - Callback  
 Number 2 (Optional) - PlatformID  
 
@@ -167,7 +167,7 @@ Exception info will also be dumped to the specified error file, which defaults t
 
 ## Callback triggers
 Specify the name of a trigger in Text 3 and once the call to MixItUp is complete, it will call a VNyan trigger with this name with the results of your command.  
-SessionID is a number you can pass in on Value 3. It will be included on any callback function, as Value 3, so you can match it to its original call. For most use cases you will probably never need to set or read this!  
+SessionID is a number you can pass in on Value 3. It will be included on any callback function, as Value 3, so you can match it to its original call. All triggers that accept a callback on Text 3 also accept a SessionID on Number 3. For most use cases you will probably never need to set or read session IDs
 
 ## Platform ID
 While the plugin allows you to configure a default platform. This can be overridden by passing in a platform ID number on Value 2. Possible values are:  
