@@ -23,7 +23,7 @@ Unless otherwise specified, All functions take a callback trigger name on Text 3
 ```_lum_miu_chat``` - Send a chat message  
 
 Text 1 (Required) - Chat message to send  
-Text 3 (Optional) - Callback trigger name for HTTP result (e.g. 200 OK)  
+Text 3 (Optional) - Callback  
 Number 1 (Optional) - Send as Streamer (set to 1 to send as streamer, set to 0 or leave unset to send as bot. If you do not have a bot account, this will always send as streamer)  
 Number 2 (Optional) - PlatformID  
 
@@ -32,13 +32,13 @@ Value 1 - HTTP result
 
 ```_lum_miu_command``` - Run a MixItUp command  
 Text 1 (Required) - Name of command in MixItUp (not chat trigger, actual name)  
-Text 2 (Optional) - Arguments to the command This will appear in $AllArgs in MixItUp
-Text 3 (Optional) - Callback trigger name for HTTP result (e.g. 200 OK)
+Text 2 (Optional) - Arguments to the command This will appear in $AllArgs in MixItUp  
+Text 3 (Optional) - Callback  
 Number 2 (Optional) - PlatformID  
 
 ```_lum_miu_getcommands``` - Get the full list of commands MixItUp has available, including your custom ones.  
 Text 1 (Optional) - Delimeter to use (defaults to comma if not specified) use a different delimeter such as || if you have command names with commas in them. You are not limited to one character.  
-Text 3 (Optional) - Callback trigger name (returns full list of commands on text1, e.g. Shoutout,Add Quote,Custom Command)  
+Text 3 - Callback  
 
 Callback:  
 Text 1 - Comma (or specified delimiter) separated list of commands available to you  
@@ -49,6 +49,7 @@ Note: The list is blank on startup. If you have a lot of commands you may wish t
 ```_lum_miu_getuser``` - Get information about a given user  
 Text 1 (Required) - Username  
 Text 2 (Required) - Callback trigger name (returns userdata)  
+Text 3 - Callback  
 Number 2 (Optional) - PlatformID  
 
 Callback:  
@@ -61,16 +62,21 @@ Number 2 - User is specifically excluded in MIU
 ```_lum_miu_getcurrency``` - Get a the value for a specific currency and specific user  
 Text 1 - Username  
 Text 2 - Currency name  
+Text 3 - Callback  
+Number 2 (Optional) - PlatformID  
 
 Callback:  
 Text 1 - Username  
 Text 2 - Currency name  
 Number 1 - Currency amount  
+Number 2 (Optional) - PlatformID  
 
 ```_lum_miu_setcurrency``` - Set a the value for a specific currency and specific user  
 Text 1 - Username  
 Text 2 - Currency name  
+Text 3 (Optional) - Callback  
 Number 1 - Currency amount
+Number 2 (Optional) - PlatformID  
 
 Callback:  
 Value 1 - HTTP result  
@@ -78,7 +84,9 @@ Value 1 - HTTP result
 ```_lum_miu_addcurrency``` - Add a value to a specific currency for a specific user  
 Text 1 - Username  
 Text 2 - Currency name  
-Number 1 - Currency amount to amend by (e.g. -10 to spend 10 coins)
+Text 3 (Optional) - Callback  
+Number 1 - Currency amount to amend by (e.g. -10 to spend 10 coins)  
+Number 2 (Optional) - PlatformID  
 
 Callback:  
 Value 1 - HTTP result  
@@ -86,6 +94,8 @@ Value 1 - HTTP result
 ```_lum_miu_getinventory``` - Get all items in a particular inventory, for a specific user  
 Text 1 - Username  
 Text 2 - Currency name  
+Text 3 - Callback  
+Number 2 (Optional) - PlatformID  
 
 Callback:  
 Text 1 - Username  
@@ -95,6 +105,8 @@ Text 3 - Inventory JSON - convert to dictionary to get <item> <value> pairs
 ```_lum_miu_getitem_<INVENTORYNAME>``` - Get the amount of a specific item within the inventory <INVENTORYNAME>  
 Text 1 - Username  
 Text 2 - Item name  
+Text 3 - Callback  
+Number 2 (Optional) - PlatformID  
 
 Callback:  
 Text 1 - Username  
@@ -104,7 +116,9 @@ Number 1 - Item amount
 ```_lum_miu_setitem_<INVENTORYNAME>``` - Set the amount of a specific item within the inventory <INVENTORYNAME>  
 Text 1 - Username  
 Text 2 - Item name  
-Number 1 - New item amount
+Text 3 (Optional) - Callback  
+Number 1 - New item amount  
+Number 2 (Optional) - PlatformID  
 
 Callback:  
 Value 1 - HTTP result  
@@ -112,7 +126,9 @@ Value 1 - HTTP result
 ```_lum_miu_additem_<INVENTORYNAME>``` - Add to the amount of a specific item within the inventory <INVENTORYNAME>  
 Text 1 - Username  
 Text 2 - Item name  
-Number 1 - Amount to adjust item amount by (e.g. -1 to consume an inventory item)
+Text 3 (Optional) - Callback  
+Number 1 - Amount to adjust item amount by (e.g. -1 to consume an inventory item)  
+Number 2 (Optional) - PlatformID  
 
 Callback:  
 Value 1 - HTTP result  
@@ -121,12 +137,14 @@ Value 1 - HTTP result
 Callback:  
 Text 1 - Plugin version  
 Text 2 - MixItUp version  
+Text 3 (Optional) - Callback  
 Number 1 - HTTP result from MixItUp  
 Number 3 - SessionID  
 
 ```_lum_miu_config``` - Get or set plugin configuration  
 Text 1 - Set Default platform
 Text 2 - Set MixItUp API URL (must have trailing /)  
+Text 3 (Optional if setting, required if getting) - Callback  
 
 Callback:  
 Text 1 - Default platform  
@@ -135,14 +153,16 @@ Text 2 - Error filename (if the plugin crashes, a log goes here)
 
 ```_miu_seterrorfile``` - Change the error file location  
 Text 1 - Full path to error file  
-Text 2 - Full path to log file
+Text 2 - Full path to log file  
+Text 3 - Callback  
+
 Callback is same as above
 
 Debug function:  
 ```_lum_miu_error```
 This cannot be called from VNyan but if an error occurs it will attempt to call a VNyan trigger
 named _lum_miu_error to let you know something is wrong.  
-Text 1 - Exception info
+Text 1 - Exception info  
 Exception info will also be dumped to the specified error file, which defaults to Lum_MIU_Error.txt in your user temp directory
 
 ## Callback triggers
