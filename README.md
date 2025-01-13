@@ -162,9 +162,9 @@ Contains JSON compatible with the JSON to dictionary node, with the following ke
 ```watchtime``` - in minutes  
 ```customtitle``` - can be set in MixItUp  
 ```excluded``` - the "Is specially exluded" option in MixItUp. 0 = not excluded, 1 = excluded  
-```notes``` - User notes you may have set in MixItUp
-```platform``` - Twitch, YouTube or Trovo
-```displayname``` - May differ from username, will use whatever case the user prefers
+```notes``` - User notes you may have set in MixItUp  
+```platform``` - Twitch, YouTube or Trovo  
+```displayname``` - May differ from username, will use whatever case the user prefers  
 ```avatarlink``` - URL to the user's profile pic  
 ```roles``` - comma separated list of roles the user has in MIU e.g. moderator, vip etc. Can be split to a TArray and then searched for a specific value  
 ```subscribertier``` - 0, 1, 2 or 3, for Twitch. No idea if this does anything on YouTube or Trovo  
