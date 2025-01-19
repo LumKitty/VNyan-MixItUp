@@ -79,7 +79,10 @@ Number 1 - Currency amount
 Number 2 (Optional) - PlatformID  
 
 Callback:  
-Value 1 - HTTP result  
+Text 1 - Username  
+Text 2 - Currency name  
+Number 1 - Currency amount  
+Number 2 (Optional) - PlatformID  
 
 ```_lum_miu_addcurrency``` - Add a value to a specific currency for a specific user  
 Text 1 - Username  
@@ -89,20 +92,36 @@ Number 1 - Currency amount to amend by (e.g. -10 to spend 10 coins)
 Number 2 (Optional) - PlatformID  
 
 Callback:  
-Value 1 - HTTP result  
+Text 1 - Username  
+Text 2 - Currency name  
+Number 1 - Currency amount  
+Number 2 (Optional) - PlatformID  
+
+```_lum_miu_usecurrency``` - Subtract a value from a specific currency for a specific user - if the user has enough currency  
+Text 1 - Username  
+Text 2 - Currency name  
+Text 3 (Optional) - Callback  
+Number 1 - Currency amount to amend by (e.g. -10 to spend 10 coins)  
+Number 2 (Optional) - PlatformID  
+
+Callback:  
+Text 1 - Username  
+Text 2 - Currency name - if negative then the user had insufficient currency and the subtraction did not take place  
+Number 1 - Currency amount  
+Number 2 (Optional) - PlatformID  
 
 ```_lum_miu_getinventory``` - Get all items in a particular inventory, for a specific user  
 Text 1 - Username  
 Text 2 - Currency name  
 Text 3 - Callback  
-Number 2 (Optional) - PlatformID  
+Number 2 (Optional - PlatformID  
 
 Callback:  
 Text 1 - Username  
 Text 2 - Inventory name  
 Text 3 - Inventory JSON - convert to dictionary to get <item> <value> pairs  
 
-```_lum_miu_getitem_<INVENTORYNAME>``` - Get the amount of a specific item within the inventory <INVENTORYNAME>  
+```_lum_miu_getitem_<INVENTORYNAME>``` - Get the amount of a specific item within the inventory INVENTORYNAME  
 Text 1 - Username  
 Text 2 - Item name  
 Text 3 - Callback  
@@ -113,7 +132,7 @@ Text 1 - Username
 Text 2 - Item name  
 Number 1 - Item amount  
 
-```_lum_miu_setitem_<INVENTORYNAME>``` - Set the amount of a specific item within the inventory <INVENTORYNAME>  
+```_lum_miu_setitem_<INVENTORYNAME>``` - Set the amount of a specific item within the inventory INVENTORYNAME  
 Text 1 - Username  
 Text 2 - Item name  
 Text 3 (Optional) - Callback  
@@ -121,9 +140,13 @@ Number 1 - New item amount
 Number 2 (Optional) - PlatformID  
 
 Callback:  
-Value 1 - HTTP result  
+Text 1 - Username  
+Text 2 - Item name  
+Text 3 (Optional) - Callback  
+Number 1 - New item amount  
+Number 2 (Optional) - PlatformID  
 
-```_lum_miu_additem_<INVENTORYNAME>``` - Add to the amount of a specific item within the inventory <INVENTORYNAME>  
+```_lum_miu_additem_<INVENTORYNAME>``` - Add to the amount of a specific item within the inventory INVENTORYNAME  
 Text 1 - Username  
 Text 2 - Item name  
 Text 3 (Optional) - Callback  
@@ -131,7 +154,25 @@ Number 1 - Amount to adjust item amount by (e.g. -1 to consume an inventory item
 Number 2 (Optional) - PlatformID  
 
 Callback:  
-Value 1 - HTTP result  
+Text 1 - Username  
+Text 2 - Item name  
+Text 3 (Optional) - Callback  
+Number 1 - New item amount  
+Number 2 (Optional) - PlatformID  
+
+```_lum_miu_useitem_<INVENTORYNAME>``` - Subtract to the amount of a specific item within the inventory INVENTORYNAME, if the user has sufficient items  
+Text 1 - Username  
+Text 2 - Item name  
+Text 3 (Optional) - Callback  
+Number 1 - Amount to adjust item amount by (e.g. -1 to consume an inventory item)  
+Number 2 (Optional) - PlatformID  
+
+Callback:  
+Text 1 - Username  
+Text 2 - Item name  
+Text 3 (Optional) - Callback  
+Number 1 - New item amount - If negative then it means the user had insufficient items  
+Number 2 (Optional) - PlatformID  
 
 ```_lum_miu_getstatus``` - Get information about the plugin and MIU  
 Callback:  
