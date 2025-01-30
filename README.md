@@ -54,7 +54,7 @@ Number 2 (Optional) - PlatformID
 
 Callback:  
 Text 1 - User's custom title  
-Text 2 - User in JSON format. See section below on this
+Text 2 - User in JSON format. See section below on this  
 Text 3 - Username  
 Number 1 - Time watched in minutes  
 Number 2 - User is specifically excluded in MIU  
@@ -112,7 +112,7 @@ Number 2 (Optional) - PlatformID
 
 ```_lum_miu_getinventory``` - Get all items in a particular inventory, for a specific user  
 Text 1 - Username  
-Text 2 - Currency name  
+Text 2 - Inventory name  
 Text 3 - Callback  
 Number 2 (Optional - PlatformID  
 
@@ -192,7 +192,7 @@ Text 1 - Default platform
 Text 2 - MixItUp API URL  
 Text 2 - Error filename (if the plugin crashes, a log goes here)  
 
-```_miu_seterrorfile``` - Change the error file location  
+```_lum_miu_seterrorfile``` - Change the error file location  
 Text 1 - Full path to error file  
 Text 2 - Full path to log file  
 Text 3 - Callback  
