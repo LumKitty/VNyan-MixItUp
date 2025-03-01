@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -12,16 +13,17 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 using UnityEngine.XR;
+using VNyanInterface;
 // using UnityEngine.UI;
 
 namespace VNyan_MixItUp
 {
     public class MixItUp : MonoBehaviour, VNyanInterface.ITriggerHandler
     {
-        private string ErrorFile; // = System.IO.Path.GetTempPath() + "\\Lum_MIU_Error.txt";
-        private string LogFile;   // = System.IO.Path.GetTempPath() + "\\Lum_MIU_Log.txt";
+        // private string ErrorFile; // = System.IO.Path.GetTempPath() + "\\Lum_MIU_Error.txt";
+        // private string LogFile;   // = System.IO.Path.GetTempPath() + "\\Lum_MIU_Log.txt";
         private string[] Platforms   = { "Twitch", "Twitch", "YouTube", "Trovo" }; // [0] is the user-selectable default platform, 1-3 are fixed, Twitch is default, hence the double
-        private const string Version = "1.0-RC2";
+        private const string Version = "1.0-RC4";
         private string miuURL;    // = "http://localhost:8911/api/v2/";
         private static HttpClient client = new HttpClient();
         private Dictionary<String, String> miuCommands    = new Dictionary<string, string>();
@@ -33,16 +35,17 @@ namespace VNyan_MixItUp
          *                                    Name    ItemID
          */
         private void Log(string message) {
-            if (LogFile.ToString().Length > 0) {
+            /*if (LogFile.ToString().Length > 0) {
                 System.IO.File.AppendAllText(LogFile, message + "\r\n");
-            }
+            }*/
+            VNyanInterface.VNyanInterface.VNyanTrigger.callTrigger("_lum_dbg_log", 0, 0, 0, message, "", "");
         }
         public void Awake() {
             try {
                 
                 VNyanInterface.VNyanInterface.VNyanTrigger.registerTriggerListener(this);
                 LoadPluginSettings();
-                System.IO.File.WriteAllText(LogFile, "Started VNyan-MixItUp v"+Version+"\r\n");
+                //System.IO.File.WriteAllText(LogFile, "Started VNyan-MixItUp v"+Version+"\r\n");
             } catch (Exception e) {
                 ErrorHandler(e);
             }
@@ -54,12 +57,12 @@ namespace VNyan_MixItUp
                 // Read string value
                 string temp_MiuURL;
                 string temp_Platform;
-                string temp_ErrorFile;
-                string temp_LogFile;
+                //string temp_ErrorFile;
+                //string temp_LogFile;
                 settings.TryGetValue("MixItUpURL", out temp_MiuURL);
                 settings.TryGetValue("DefaultPlatform", out temp_Platform);
-                settings.TryGetValue("ErrorFile", out temp_ErrorFile);
-                settings.TryGetValue("LogFile", out temp_LogFile);
+                //settings.TryGetValue("ErrorFile", out temp_ErrorFile);
+                //settings.TryGetValue("LogFile", out temp_LogFile);
                 if (temp_MiuURL != null) { 
                     miuURL = temp_MiuURL; 
                 } else {
@@ -70,7 +73,7 @@ namespace VNyan_MixItUp
                 } else {
                     Platforms[0] = "Twitch";
                 }
-                if (temp_ErrorFile != null) {
+                /*if (temp_ErrorFile != null) {
                     ErrorFile = temp_ErrorFile;
                 } else {
                     ErrorFile = System.IO.Path.GetTempPath() + "\\Lum_MIU_Error.txt";
@@ -80,7 +83,7 @@ namespace VNyan_MixItUp
                 }
                 else {
                     LogFile = System.IO.Path.GetTempPath() + "\\Lum_MIU_Log.txt";
-                }
+                }*/
 
         // Convert second value to decimal
         //if (settings.TryGetValue("SomeValue2", out string s))
@@ -98,8 +101,8 @@ namespace VNyan_MixItUp
             Dictionary<string, string> settings = new Dictionary<string, string>();
             settings["MixItUpURL"] = miuURL;
             settings["DefaultPlatform"] = Platforms[0];
-            settings["ErrorFile"] = ErrorFile;
-            settings["LogFile"] = LogFile;
+            //settings["ErrorFile"] = ErrorFile;
+            //settings["LogFile"] = LogFile;
             // settings["SomeValue2"] = someValue2.ToString(CultureInfo.InvariantCulture); // Make sure to use InvariantCulture to avoid decimal delimeter errors
 
             VNyanInterface.VNyanInterface.VNyanSettings.saveSettings("Lum-MixItUp.cfg", settings);
@@ -204,7 +207,7 @@ namespace VNyan_MixItUp
             }
         }
         void ErrorHandler(Exception e) {
-            System.IO.File.WriteAllText(ErrorFile, e.ToString());
+            //System.IO.File.WriteAllText(ErrorFile, e.ToString());
             CallVNyan("_lum_miu_error", 0, 0, 0, e.ToString(), "", "");
         }
         async Task GetMiuCommands(string delimiter, string Callback, int SessionID) {
@@ -270,6 +273,7 @@ namespace VNyan_MixItUp
             try {
                 dynamic Results;
                 string fullUserName = Platform + UserName;
+                string SubscriberTier = "0";
                 Log("Searching Cache");
                 if (miuUsers.ContainsKey(fullUserName)) {
                     Log("Using cache");
@@ -295,8 +299,13 @@ namespace VNyan_MixItUp
                 }
                 foreach (string Role in Results.User.PlatformData[Platform].Roles) {
                     Roles += "," + Role;
+                    if (Role.ToLower() == "subscriber") {
+                        SubscriberTier = Results.User.PlatformData[Platform].SubscriberTier.ToString();
+                    }
                 }
+                // if (Platform.ToLower() != "twitch") { SubscriberTier = Results.User.PlatformData[Platform].SubscriberTier.ToString(); }
                 Roles = Roles.Substring(1);
+
 
                 JObject VNyanResult = new JObject(
                     new JProperty("username", UserName),
@@ -306,10 +315,11 @@ namespace VNyan_MixItUp
                     new JProperty("notes", Results.User.Notes),
                     new JProperty("platform", Results.User.PlatformData[Platform].Platform),
                     new JProperty("displayname", Results.User.PlatformData[Platform].DisplayName),
-                    new JProperty("avatarlink", Results.User.PlatformData[Platform].AvatarLink), 
+                    new JProperty("avatarlink", Results.User.PlatformData[Platform].AvatarLink),
                     new JProperty("roles", Roles),
-                    new JProperty("subscribertier", Results.User.PlatformData[Platform].SubscriberTier.ToString() )
+                    new JProperty("subscribertier", SubscriberTier)
                 );
+                 
                 Log(VNyanResult.ToString());
 
                 CallVNyan(Callback, MinutesWatched, Excluded, SessionID, CustomTitle, VNyanResult.ToString(), UserName);
@@ -333,9 +343,9 @@ namespace VNyan_MixItUp
             try {
                 if (Platform.Length > 0)     { Platforms[0] = Platform; }
                 if (URL.Length > 0)          { miuURL = URL; }
-                if (NewErrorFile.Length > 0) { ErrorFile = NewErrorFile; }
-                if (NewLogFile.Length > 0)   { LogFile = NewLogFile; }
-                CallVNyan(Callback, 0, 0, SessionID, Platforms[0], miuURL, ErrorFile);
+                //if (NewErrorFile.Length > 0) { ErrorFile = NewErrorFile; }
+                //if (NewLogFile.Length > 0)   { LogFile = NewLogFile; }
+                CallVNyan(Callback, 0, 0, SessionID, Platforms[0], miuURL, ""); // ErrorFile);
             } catch (Exception e) {
                 ErrorHandler(e);
             }
@@ -609,78 +619,85 @@ namespace VNyan_MixItUp
 
         public void triggerCalled(string name, int int1, int SessionID, int PlatformID, string text1, string text2, string Callback) {
             try {
-                if (name.Substring(0,9) == "_lum_miu_") {
-                    Log("Detected trigger: " + name + " with " + int1.ToString() + ", " + SessionID.ToString() + ", " + PlatformID.ToString() + ", " + text1 + ", " + text2 + ", " + Callback);
-                    switch (name.Substring(8)) {
-                        case "_chat":
-                            SendMiuChat(text1, (int1 > 0), Callback, Platforms[PlatformID], SessionID);
-                            break;
-                        case "_clearchat":
-                            ClearMiuChat(Callback, SessionID);
-                            break;
-                        case "_command":
-                            RunMiuCommand(text1.ToLower(), text2, Callback, Platforms[PlatformID], SessionID);
-                            break;
-                        case "_getcommands":
-                            if (text1.Length == 0) { text1 = ","; }
-                            GetMiuCommands(text1, Callback, SessionID);
-                            break;
-                        case "_getuser":
-                            GetMiuUser(text1, Callback, Platforms[PlatformID], SessionID);
-                            break;
-                        case "_getinventory":
-                            GetMiuInventory(text1, text2, Callback, Platforms[PlatformID], SessionID);
-                            break;
-                        case "_getcurrency":
-                            GetMiuCurrency(text1, text2, Callback, Platforms[PlatformID], SessionID);
-                            break;
-                        case "_setcurrency":
-                            SetMiuCurrency(text1, text2, int1, Callback, Platforms[PlatformID], SessionID, "PUT");
-                            break;
-                        case "_addcurrency":
-                            SetMiuCurrency(text1, text2, int1, Callback, Platforms[PlatformID], SessionID, "PATCH");
-                            break;
-                        case "_usecurrency":
-                            UseMiuCurrency(text1, text2, int1, Callback, Platforms[PlatformID], SessionID);
-                            break;
-                        case "_getstatus":
-                            GetStatus(Callback, Platforms[PlatformID], SessionID);
-                            break;
-                        case "_config":
-                            Config(text1, text2, "", "", Callback, SessionID);
-                            break;
-                        case "_seterrorfile":
-                            Config("", "", text1, text2, Callback, SessionID);
-                            break;
-                        /*case "_getactiveusers":
-                            GetMiuUsers(Callback, Platforms[PlatformID], SessionID, false);
-                            break;
-                        case "_getallusers":
-                            GetMiuUsers(Callback, Platforms[PlatformID], SessionID, true);
-                            break;*/
-                        default:
-                            if (name.Length > 18) {
-                                string InventoryID = name.Substring(17);
-                                Log("Inventory Name :" +InventoryID);
-                                Log("Function Called :" + name.Substring(0,17));
-                                switch (name.Substring(0,17)) {
-                                    case "_lum_miu_getitem_":
-                                        GetMiuInventoryItemAmount(text1, InventoryID, text2, Callback, Platforms[PlatformID], SessionID);
-                                        break;
-                                    case "_lum_miu_setitem_":
-                                        SetMiuInventoryItemAmount(text1, InventoryID, text2, int1, Callback, Platforms[PlatformID], SessionID, "PUT");
-                                        break;
-                                    case "_lum_miu_additem_":
-                                        SetMiuInventoryItemAmount(text1, InventoryID, text2, int1, Callback, Platforms[PlatformID], SessionID, "PATCH");
-                                        break;
-                                    case "_lum_miu_useitem_":
-                                        UseMiuInventoryItemAmount(text1, InventoryID, text2, int1, Callback, Platforms[PlatformID], SessionID);
-                                        break;
+                if (name.Length > 10)
+                {
+                    if (name.Substring(0, 9) == "_lum_miu_")
+                    {
+                        Log("Detected trigger: " + name + " with " + int1.ToString() + ", " + SessionID.ToString() + ", " + PlatformID.ToString() + ", " + text1 + ", " + text2 + ", " + Callback);
+                        switch (name.Substring(8))
+                        {
+                            case "_chat":
+                                SendMiuChat(text1, (int1 > 0), Callback, Platforms[PlatformID], SessionID);
+                                break;
+                            case "_clearchat":
+                                ClearMiuChat(Callback, SessionID);
+                                break;
+                            case "_command":
+                                RunMiuCommand(text1.ToLower(), text2, Callback, Platforms[PlatformID], SessionID);
+                                break;
+                            case "_getcommands":
+                                if (text1.Length == 0) { text1 = ","; }
+                                GetMiuCommands(text1, Callback, SessionID);
+                                break;
+                            case "_getuser":
+                                GetMiuUser(text1, Callback, Platforms[PlatformID], SessionID);
+                                break;
+                            case "_getinventory":
+                                GetMiuInventory(text1, text2, Callback, Platforms[PlatformID], SessionID);
+                                break;
+                            case "_getcurrency":
+                                GetMiuCurrency(text1, text2, Callback, Platforms[PlatformID], SessionID);
+                                break;
+                            case "_setcurrency":
+                                SetMiuCurrency(text1, text2, int1, Callback, Platforms[PlatformID], SessionID, "PUT");
+                                break;
+                            case "_addcurrency":
+                                SetMiuCurrency(text1, text2, int1, Callback, Platforms[PlatformID], SessionID, "PATCH");
+                                break;
+                            case "_usecurrency":
+                                UseMiuCurrency(text1, text2, int1, Callback, Platforms[PlatformID], SessionID);
+                                break;
+                            case "_getstatus":
+                                GetStatus(Callback, Platforms[PlatformID], SessionID);
+                                break;
+                            case "_config":
+                                Config(text1, text2, "", "", Callback, SessionID);
+                                break;
+                            case "_seterrorfile":
+                                Config("", "", text1, text2, Callback, SessionID);
+                                break;
+                            /*case "_getactiveusers":
+                                GetMiuUsers(Callback, Platforms[PlatformID], SessionID, false);
+                                break;
+                            case "_getallusers":
+                                GetMiuUsers(Callback, Platforms[PlatformID], SessionID, true);
+                                break;*/
+                            default:
+                                if (name.Length > 18)
+                                {
+                                    string InventoryID = name.Substring(17);
+                                    Log("Inventory Name :" + InventoryID);
+                                    Log("Function Called :" + name.Substring(0, 17));
+                                    switch (name.Substring(0, 17))
+                                    {
+                                        case "_lum_miu_getitem_":
+                                            GetMiuInventoryItemAmount(text1, InventoryID, text2, Callback, Platforms[PlatformID], SessionID);
+                                            break;
+                                        case "_lum_miu_setitem_":
+                                            SetMiuInventoryItemAmount(text1, InventoryID, text2, int1, Callback, Platforms[PlatformID], SessionID, "PUT");
+                                            break;
+                                        case "_lum_miu_additem_":
+                                            SetMiuInventoryItemAmount(text1, InventoryID, text2, int1, Callback, Platforms[PlatformID], SessionID, "PATCH");
+                                            break;
+                                        case "_lum_miu_useitem_":
+                                            UseMiuInventoryItemAmount(text1, InventoryID, text2, int1, Callback, Platforms[PlatformID], SessionID);
+                                            break;
+                                    }
                                 }
-                            }
-                            break;
-                        //_getallusers
-                        //_getactiveusers
+                                break;
+                                //_getallusers
+                                //_getactiveusers
+                        }
                     }
                 }
             }
