@@ -48,8 +48,7 @@ Note: The list is blank on startup. If you have a lot of commands you may wish t
 
 ```_lum_miu_getuser``` - Get information about a given user  
 Text 1 - Username  
-Text 2 - Callback trigger name (returns userdata)  
-Text 3 - Callback  
+Text 3 - Callback trigger name (returns userdata)  
 Number 2 (Optional) - PlatformID  
 
 Callback:  
