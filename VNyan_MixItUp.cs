@@ -18,12 +18,17 @@ using VNyanInterface;
 
 namespace VNyan_MixItUp
 {
-    public class MixItUp : MonoBehaviour, VNyanInterface.ITriggerHandler
-    {
+    public class MixItUp : IVNyanPluginManifest, VNyanInterface.ITriggerHandler {
+
+        public string PluginName { get; } = "MixItUp";
+        public string Version { get; } = "v1.0";
+        public string Title { get; } = "MixItUp Integration";
+        public string Author { get; } = "LumKitty";
+        public string Website { get; } = "https://lum.uk/";
+    
         // private string ErrorFile; // = System.IO.Path.GetTempPath() + "\\Lum_MIU_Error.txt";
         // private string LogFile;   // = System.IO.Path.GetTempPath() + "\\Lum_MIU_Log.txt";
         private string[] Platforms   = { "Twitch", "Twitch", "YouTube", "Trovo" }; // [0] is the user-selectable default platform, 1-3 are fixed, Twitch is default, hence the double
-        private const string Version = "1.0-RC4";
         private string miuURL;    // = "http://localhost:8911/api/v2/";
         private static HttpClient client = new HttpClient();
         private Dictionary<String, String> miuCommands    = new Dictionary<string, string>();
@@ -40,7 +45,7 @@ namespace VNyan_MixItUp
             }*/
             VNyanInterface.VNyanInterface.VNyanTrigger.callTrigger("_lum_dbg_log", 0, 0, 0, message, "", "");
         }
-        public void Awake() {
+        public void InitializePlugin() {
             try {
                 
                 VNyanInterface.VNyanInterface.VNyanTrigger.registerTriggerListener(this);
