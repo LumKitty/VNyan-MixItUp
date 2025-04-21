@@ -6,9 +6,11 @@ Allows you to send chat messages, run custom MixItUpCommands, and retrieve user 
 
 ## Installation
 1. Download from https://github.com/LumKitty/VNyan-MixItUp/releases
-2. Copy the contents of the zip file into VNyan\Items\Assemblies (no subfolders)  
-3. Enable the MixItUp developer API: Services -> Developer API  
-4. (Optional) Import the example node graph
+2. Copy the contents of the zip file into VNyan\Items\Assemblies (no subfolders)
+3. Enable plugins in VNyan: Settings -> Misc -> Additional Settings -> Allow 3rd party mods/plugins  
+4. Enable the MixItUp developer API: Services -> Developer API
+5. Restart VNyan
+6. (Optional) Import the example node graph
 
 ## Configuration
 The default configuration assumes MixItUp is running on the same PC as VNyan and you are using Twitch.  
