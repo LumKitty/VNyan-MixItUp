@@ -21,7 +21,7 @@ namespace VNyan_MixItUp
     public class MixItUp : IVNyanPluginManifest, VNyanInterface.ITriggerHandler {
 
         public string PluginName { get; } = "MixItUp";
-        public string Version { get; } = "v1.0";
+        public string Version { get; } = "v1.1";
         public string Title { get; } = "MixItUp Integration";
         public string Author { get; } = "LumKitty";
         public string Website { get; } = "https://lum.uk/";
@@ -31,6 +31,8 @@ namespace VNyan_MixItUp
         private string[] Platforms   = { "Twitch", "Twitch", "YouTube", "Trovo" }; // [0] is the user-selectable default platform, 1-3 are fixed, Twitch is default, hence the double
         private string miuURL;    // = "http://localhost:8911/api/v2/";
         private static HttpClient client = new HttpClient();
+        JsonSerializerSettings SerialSettings = new JsonSerializerSettings();
+
         private Dictionary<String, String> miuCommands    = new Dictionary<string, string>();
         private Dictionary<String, String> miuUsers       = new Dictionary<string, string>();
         private Dictionary<String, String> miuCurrencies  = new Dictionary<string, string>();
@@ -43,11 +45,12 @@ namespace VNyan_MixItUp
             /*if (LogFile.ToString().Length > 0) {
                 System.IO.File.AppendAllText(LogFile, message + "\r\n");
             }*/
-            VNyanInterface.VNyanInterface.VNyanTrigger.callTrigger("_lum_dbg_log", 0, 0, 0, message, "", "");
+            //VNyanInterface.VNyanInterface.VNyanTrigger.callTrigger("_lum_dbg_log", 0, 0, 0, message, "", "");
+            UnityEngine.Debug.Log("[MixItUp] "+message);
         }
         public void InitializePlugin() {
             try {
-                
+                SerialSettings.StringEscapeHandling = StringEscapeHandling.EscapeNonAscii;
                 VNyanInterface.VNyanInterface.VNyanTrigger.registerTriggerListener(this);
                 LoadPluginSettings();
                 //System.IO.File.WriteAllText(LogFile, "Started VNyan-MixItUp v"+Version+"\r\n");
@@ -138,13 +141,18 @@ namespace VNyan_MixItUp
                 ErrorHandler(e);
             }
         }
+        async Task<string> httpRequest(string Method, string URL, JObject Content, string Callback, int SessionID) {
+            return await httpRequest(Method, URL, JsonConvert.SerializeObject(Content, SerialSettings), Callback, SessionID);
+        }
+
+
         async Task<string> httpRequest(string Method, string URL, string Content, string Callback, int SessionID) {
             try {
                 var jsonData = new StringContent(Content, Encoding.ASCII);
                 jsonData.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
-                string Response="";
+                string Response = "";
                 int httpStatus = 0;
-                
+
                 switch (Method) {
                     case "POST":
                         Log("POST: " + URL + " : " + Content);
@@ -182,14 +190,14 @@ namespace VNyan_MixItUp
                 if (Callback.Length > 0) {
                     CallVNyan(Callback, httpStatus, 0, SessionID, "", "", "");
                 }
-                
+
                 return Response;
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 ErrorHandler(e);
                 return "";
             }
         }
+        
         async Task RunMiuCommand(string command, string args, string Callback, string Platform, int SessionID) {
             try {
                 if (!miuCommands.ContainsKey(command)) {
@@ -197,7 +205,12 @@ namespace VNyan_MixItUp
                     if (!miuCommands.ContainsKey(command)) { Console.WriteLine("command not found"); return; }
                 }
 
-                string Content = "{ \"Platform\": \"" + Platform + "\", \"Arguments\": \"" + args + "\" }";
+                JObject Content = new JObject(
+                    new JProperty("Platform", Platform),
+                    new JProperty("Arguments", args)
+                );
+
+                //string Content = "{ \"Platform\": \"" + Platform + "\", \"Arguments\": \"" + args + "\" }";
                 httpRequest("POST", miuURL + "commands/" + miuCommands[command], Content, Callback, SessionID);
             } catch (Exception e) {
                 ErrorHandler(e);
@@ -213,7 +226,8 @@ namespace VNyan_MixItUp
         }
         void ErrorHandler(Exception e) {
             //System.IO.File.WriteAllText(ErrorFile, e.ToString());
-            CallVNyan("_lum_miu_error", 0, 0, 0, e.ToString(), "", "");
+            //CallVNyan("_lum_miu_error", 0, 0, 0, e.ToString(), "", "");
+            Log(e.ToString());
         }
         async Task GetMiuCommands(string delimiter, string Callback, int SessionID) {
             try {
@@ -247,7 +261,7 @@ namespace VNyan_MixItUp
                 {
                     Content += "false }";
                 }*/
-                httpRequest(Method, URL, Content.ToString(), Callback, SessionID);
+                httpRequest(Method, URL, Content, Callback, SessionID);
             } catch (Exception e) {
                 ErrorHandler(e);
             }
@@ -460,7 +474,7 @@ namespace VNyan_MixItUp
                     new JProperty("Amount", Amount.ToString())
                 );
 
-                string Response = await httpRequest(Method, URL, ItemChange.ToString(), "", SessionID);
+                string Response = await httpRequest(Method, URL, ItemChange, "", SessionID);
                 CallVNyan(Callback, int.Parse(Response), 0, SessionID, UserName, InventoryName, ItemName);
             }
             else
@@ -584,7 +598,7 @@ namespace VNyan_MixItUp
                     new JProperty("Amount", Amount.ToString())
                 );
 
-                string Response = await httpRequest(Method, URL, CurrencyChange.ToString(), "", SessionID);
+                string Response = await httpRequest(Method, URL, CurrencyChange, "", SessionID);
                 CallVNyan(Callback, int.Parse(Response), 0, SessionID, UserName, CurrencyName, "");
             } else {
                 CallVNyan(Callback, 0, 1, SessionID, UserName, CurrencyName, "");
