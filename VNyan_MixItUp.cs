@@ -21,7 +21,7 @@ namespace VNyan_MixItUp
     public class MixItUp : IVNyanPluginManifest, VNyanInterface.ITriggerHandler {
 
         public string PluginName { get; } = "MixItUp";
-        public string Version { get; } = "v1.1";
+        public string Version { get; } = "v1.1a";
         public string Title { get; } = "MixItUp Integration";
         public string Author { get; } = "LumKitty";
         public string Website { get; } = "https://lum.uk/";
@@ -29,7 +29,7 @@ namespace VNyan_MixItUp
         // private string ErrorFile; // = System.IO.Path.GetTempPath() + "\\Lum_MIU_Error.txt";
         // private string LogFile;   // = System.IO.Path.GetTempPath() + "\\Lum_MIU_Log.txt";
         private string[] Platforms   = { "Twitch", "Twitch", "YouTube", "Trovo" }; // [0] is the user-selectable default platform, 1-3 are fixed, Twitch is default, hence the double
-        private string miuURL;    // = "http://localhost:8911/api/v2/";
+        private string miuURL = "http://localhost:8911/api/v2/";
         private static HttpClient client = new HttpClient();
         JsonSerializerSettings SerialSettings = new JsonSerializerSettings();
 
@@ -50,9 +50,9 @@ namespace VNyan_MixItUp
         }
         public void InitializePlugin() {
             try {
-                SerialSettings.StringEscapeHandling = StringEscapeHandling.EscapeNonAscii;
                 VNyanInterface.VNyanInterface.VNyanTrigger.registerTriggerListener(this);
                 LoadPluginSettings();
+                SerialSettings.StringEscapeHandling = StringEscapeHandling.EscapeNonAscii;
                 //System.IO.File.WriteAllText(LogFile, "Started VNyan-MixItUp v"+Version+"\r\n");
             } catch (Exception e) {
                 ErrorHandler(e);
@@ -60,8 +60,10 @@ namespace VNyan_MixItUp
         }
         private void LoadPluginSettings() {
             // Get settings in dictionary
+            Log("Attempting to read settings");
             Dictionary<string, string> settings = VNyanInterface.VNyanInterface.VNyanSettings.loadSettings("Lum-MixItUp.cfg");
             if (settings != null) {
+                Log("Lum-MixItUp.cfg found, reading settings");
                 // Read string value
                 string temp_MiuURL;
                 string temp_Platform;
@@ -99,7 +101,11 @@ namespace VNyan_MixItUp
         //    float.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out someValue2);
         //}
 
+            } else {
+                Log("Lum-MixItUp.cfg not found. Using default settings");
             }
+            Log("MIU URL: " + miuURL);
+            Log("Default platform: " + Platforms[0]);
         }
         private void OnApplicationQuit() {
             // Save settings
