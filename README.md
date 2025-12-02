@@ -200,13 +200,6 @@ Text 3 - Callback
 
 Callback is same as above
 
-Debug function:  
-```_lum_miu_error```
-This cannot be called from VNyan but if an error occurs it will attempt to call a VNyan trigger
-named _lum_miu_error to let you know something is wrong.  
-Text 1 - Exception info  
-Exception info will also be dumped to the specified error file, which defaults to Lum_MIU_Error.txt in your user temp directory
-
 ## Callback triggers
 Specify the name of a trigger in Text 3 and once the call to MixItUp is complete, it will call a VNyan trigger with this name with the results of your command.  
 SessionID is a number you can pass in on Value 3. It will be included on any callback function, as Value 3, so you can match it to its original call. All triggers that accept a callback on Text 3 also accept a SessionID on Number 3. For most use cases you will probably never need to set or read session IDs
