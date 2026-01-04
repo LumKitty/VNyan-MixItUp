@@ -21,7 +21,7 @@ namespace VNyan_MixItUp
     public class MixItUp : IVNyanPluginManifest, VNyanInterface.ITriggerHandler {
 
         public string PluginName { get; } = "MixItUp";
-        public string Version { get; } = "v1.1a";
+        public string Version { get; } = "v1.2";
         public string Title { get; } = "MixItUp Integration";
         public string Author { get; } = "LumKitty";
         public string Website { get; } = "https://lum.uk/";
@@ -286,6 +286,7 @@ namespace VNyan_MixItUp
         }
         string GetMiuUserID(string UserName, string Platform) {
             string fullUserName = Platform + UserName;
+            Log("Looking up: " + fullUserName);
             if (miuUsers.ContainsKey(fullUserName)) {
                 return miuUsers[fullUserName];
             } else {
@@ -377,6 +378,7 @@ namespace VNyan_MixItUp
         }
         string GetMiuInventoryItemID(string InventoryName, string ItemName)
         {
+            Log("Looking up Intentory Item: " + InventoryName + "/" + ItemName);
             string ItemID = "";
             InventoryName = InventoryName.ToLower();
             ItemName = ItemName.ToLower();
@@ -460,7 +462,8 @@ namespace VNyan_MixItUp
                 var Result = await client.GetAsync(URL);
                 string Response = Result.Content.ReadAsStringAsync().Result;
                 Log(Response);
-                CallVNyan(Callback, int.Parse(Response), 0, SessionID, UserName, InventoryName, ItemName);
+                dynamic Results = JsonConvert.DeserializeObject<dynamic>(Response);
+                CallVNyan(Callback, int.Parse(Results.Amount.ToString()), 0, SessionID, UserName, InventoryName, ItemName);
             }
             else
             {
@@ -481,7 +484,10 @@ namespace VNyan_MixItUp
                 );
 
                 string Response = await httpRequest(Method, URL, ItemChange, "", SessionID);
-                CallVNyan(Callback, int.Parse(Response), 0, SessionID, UserName, InventoryName, ItemName);
+                Log("Result: "+Response);
+                dynamic Results = JsonConvert.DeserializeObject<dynamic>(Response);
+                //Log("JSON: " + Results.ToString());
+                CallVNyan(Callback, int.Parse(Results.Amount.ToString()), 0, SessionID, UserName, InventoryName, ItemName);
             }
             else
             {
@@ -501,7 +507,8 @@ namespace VNyan_MixItUp
                 var Result = await client.GetAsync(URL);
                 string Response = Result.Content.ReadAsStringAsync().Result;
                 Log(Response);
-                int ItemAmount = int.Parse(Response);
+                dynamic Results = JsonConvert.DeserializeObject<dynamic>(Response);
+                int ItemAmount = int.Parse(Results.Amount.ToString());
                 if (ItemAmount >= Amount)
                 {
                     Log(UserName+" has sufficient items (" + ItemAmount.ToString() + "). Spending " + Amount.ToString());
@@ -556,7 +563,8 @@ namespace VNyan_MixItUp
                 var Result = await client.GetAsync(URL);
                 string Response = Result.Content.ReadAsStringAsync().Result;
                 Log(Response);
-                CallVNyan(Callback, int.Parse(Response), 0, SessionID, UserName, CurrencyName, "");
+                dynamic Results = JsonConvert.DeserializeObject<dynamic>(Response);
+                CallVNyan(Callback, int.Parse(Results.Amount.ToString()), 0, SessionID, UserName, CurrencyName, "");
             }
             else
             {
@@ -576,7 +584,8 @@ namespace VNyan_MixItUp
                 var Result = await client.GetAsync(URL);
                 string Response = Result.Content.ReadAsStringAsync().Result;
                 Log(Response);
-                int CurrencyAmount = int.Parse(Response);
+                dynamic Results = JsonConvert.DeserializeObject<dynamic>(Response);
+                int CurrencyAmount = int.Parse(Results.Amount.ToString());
                 if (CurrencyAmount >= Amount)
                 {
                     Log(UserName + " has sufficient funds (" + CurrencyAmount.ToString()+"). Spending " + Amount.ToString());
@@ -605,7 +614,9 @@ namespace VNyan_MixItUp
                 );
 
                 string Response = await httpRequest(Method, URL, CurrencyChange, "", SessionID);
-                CallVNyan(Callback, int.Parse(Response), 0, SessionID, UserName, CurrencyName, "");
+                Log(Response);
+                dynamic Results = JsonConvert.DeserializeObject<dynamic>(Response);
+                CallVNyan(Callback, int.Parse(Results.Amount.ToString()), 0, SessionID, UserName, CurrencyName, "");
             } else {
                 CallVNyan(Callback, 0, 1, SessionID, UserName, CurrencyName, "");
             }
