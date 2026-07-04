@@ -21,7 +21,7 @@ namespace VNyan_MixItUp
     public class MixItUp : IVNyanPluginManifest, VNyanInterface.ITriggerHandler {
 
         public string PluginName { get; } = "MixItUp";
-        public string Version { get; } = "v1.2";
+        public string Version { get; } = "v1.3";
         public string Title { get; } = "MixItUp Integration";
         public string Author { get; } = "LumKitty";
         public string Website { get; } = "https://lum.uk/";
@@ -204,17 +204,25 @@ namespace VNyan_MixItUp
             }
         }
         
-        async Task RunMiuCommand(string command, string args, string Callback, string Platform, int SessionID) {
+        async Task RunMiuCommand(string command, string args, string Callback, string Platform, int SessionID, bool IDInsteadOfArgs=false) {
             try {
                 if (!miuCommands.ContainsKey(command)) {
                     await UpdateMiuCommands();
                     if (!miuCommands.ContainsKey(command)) { Console.WriteLine("command not found"); return; }
                 }
 
-                JObject Content = new JObject(
-                    new JProperty("Platform", Platform),
-                    new JProperty("Arguments", args)
-                );
+                JObject Content;
+                if (IDInsteadOfArgs) {
+                    Content = new JObject(
+                        new JProperty("Platform", Platform),
+                        new JProperty("SpecialIdentifiers", Newtonsoft.Json.JsonConvert.DeserializeObject(args))
+                    );
+                } else { 
+                    Content = new JObject(
+                        new JProperty("Platform", Platform),
+                        new JProperty("Arguments", args)
+                    );
+                }
 
                 //string Content = "{ \"Platform\": \"" + Platform + "\", \"Arguments\": \"" + args + "\" }";
                 httpRequest("POST", miuURL + "commands/" + miuCommands[command], Content, Callback, SessionID);
@@ -670,6 +678,9 @@ namespace VNyan_MixItUp
                                 break;
                             case "_command":
                                 RunMiuCommand(text1.ToLower(), text2, Callback, Platforms[PlatformID], SessionID);
+                                break;
+                            case "_commandid":
+                                RunMiuCommand(text1.ToLower(), text2, Callback, Platforms[PlatformID], SessionID,true);
                                 break;
                             case "_getcommands":
                                 if (text1.Length == 0) { text1 = ","; }
