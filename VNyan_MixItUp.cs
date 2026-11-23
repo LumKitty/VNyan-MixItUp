@@ -21,14 +21,14 @@ namespace VNyan_MixItUp
     public class MixItUp : IVNyanPluginManifest, VNyanInterface.ITriggerHandler {
 
         public string PluginName { get; } = "MixItUp";
-        public string Version { get; } = "v1.3";
+        public string Version { get; } = "v1.3a";
         public string Title { get; } = "MixItUp Integration";
         public string Author { get; } = "LumKitty";
         public string Website { get; } = "https://lum.uk/";
     
         // private string ErrorFile; // = System.IO.Path.GetTempPath() + "\\Lum_MIU_Error.txt";
         // private string LogFile;   // = System.IO.Path.GetTempPath() + "\\Lum_MIU_Log.txt";
-        private string[] Platforms   = { "Twitch", "Twitch", "YouTube", "Trovo" }; // [0] is the user-selectable default platform, 1-3 are fixed, Twitch is default, hence the double
+        private List<string> Platforms = new List<string> { "All", "Twitch", "YouTube", "AltStream", "Joystick" }; // [0] is the user-selectable default platform, 1-3 are fixed, Twitch is default, hence the double
         private string miuURL = "http://localhost:8911/api/v2/";
         private static HttpClient client = new HttpClient();
         JsonSerializerSettings SerialSettings = new JsonSerializerSettings();
@@ -66,7 +66,8 @@ namespace VNyan_MixItUp
                 Log("Lum-MixItUp.cfg found, reading settings");
                 // Read string value
                 string temp_MiuURL;
-                string temp_Platform;
+                string temp_Platform = "Twitch";
+                string temp_Platforms;
                 //string temp_ErrorFile;
                 //string temp_LogFile;
                 settings.TryGetValue("MixItUpURL", out temp_MiuURL);
@@ -78,11 +79,22 @@ namespace VNyan_MixItUp
                 } else {
                     miuURL = "http://localhost:8911/api/v2/";
                 }
+                /*
                 if (temp_Platform != null) { 
                     Platforms[0] = temp_Platform; 
                 } else {
                     Platforms[0] = "Twitch";
                 }
+                */
+                settings.TryGetValue("Platforms", out temp_Platforms);
+                if (temp_Platforms != null) {
+                    Platforms.Clear();
+                    Platforms.Add(temp_Platform);
+                    foreach (string Platform in temp_Platforms.Split(',')) {
+                        Platforms.Add(Platform);
+                    }
+                }
+                Log("Found platforms: "+String.Join(", ", Platforms));
                 /*if (temp_ErrorFile != null) {
                     ErrorFile = temp_ErrorFile;
                 } else {
@@ -115,6 +127,7 @@ namespace VNyan_MixItUp
             Dictionary<string, string> settings = new Dictionary<string, string>();
             settings["MixItUpURL"] = miuURL;
             settings["DefaultPlatform"] = Platforms[0];
+            settings["Platforms"] = String.Join(",", Platforms, 1, Platforms.Count - 1);
             //settings["ErrorFile"] = ErrorFile;
             //settings["LogFile"] = LogFile;
             // settings["SomeValue2"] = someValue2.ToString(CultureInfo.InvariantCulture); // Make sure to use InvariantCulture to avoid decimal delimeter errors
@@ -266,15 +279,7 @@ namespace VNyan_MixItUp
                     new JProperty("Platform", Platform),
                     new JProperty("SendAsStreamer", SendAsStreamer)
                 );
-                /* string Content = "{ \"Message\": \"" + EscapeJSON(Message) + "\", \"Platform\": \"" + Platform + "\", \"SendAsStreamer\": "; // TODO: Convert to newtonsoft JSON
-                if (SendAsStreamer)
-                {
-                    Content += "true }";
-                }
-                else
-                {
-                    Content += "false }";
-                }*/
+                Log(Content.ToString());
                 httpRequest(Method, URL, Content, Callback, SessionID);
             } catch (Exception e) {
                 ErrorHandler(e);
@@ -671,7 +676,13 @@ namespace VNyan_MixItUp
                         switch (name.Substring(8))
                         {
                             case "_chat":
-                                SendMiuChat(text1, (int1 > 0), Callback, Platforms[PlatformID], SessionID);
+                                string Platform;
+                                if (PlatformID > 0) {
+                                    Platform = Platforms[PlatformID];
+                                } else {
+                                    Platform = "All";
+                                }
+                                SendMiuChat(text1, (int1 > 0), Callback, Platform, SessionID);
                                 break;
                             case "_clearchat":
                                 ClearMiuChat(Callback, SessionID);
